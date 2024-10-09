@@ -9,7 +9,7 @@ const {
     configPassportGithubOAuth
 } = require('../middlewares/passportAuthConfig.js');
 
-const {logInValidation} = require('../validators/loginValidators.js');
+const logInValidators = require('../validators/loginValidators.js');
 
 const authController = require('../controllers/loginController.js');
 
@@ -22,7 +22,8 @@ configPassportGithubOAuth()
 // LogIn and LogOut endpoints
 
 router.get("/logout", authController.logout)
-router.post("/auth", logInValidation(), authController.validateLogin)
+router.post("/auth", logInValidators.logInValidation(), authController.validateLogin)
+router.post("/signup", logInValidators.signUpValidation(), authController.validateSignUp)
 
 // Passport endpoints
 router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }))

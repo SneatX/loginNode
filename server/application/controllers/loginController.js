@@ -20,10 +20,7 @@ function logout (req, res) {
     });
 }
 
-async function validateLogin(req, res, next){
-
-    const userInstance = new User();
-
+async function validateSignUp(req, res, next){
     const validatorErrors = validationResult(req);
     if (!validatorErrors.isEmpty()) {
         return res.status(400).json({
@@ -33,6 +30,43 @@ async function validateLogin(req, res, next){
         });
     }
 
+    const userInstance = new User();
+    const { name, username, img, email, provider, password } = req.body;
+    const user = await userInstance.findByEmail(email);
+    if(user) return res.status(401).json({authenticated: false, user: null, msj: "email already exists", errType: 1})
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword  = await bcrypt.hash(password, salt);
+
+    
+    const newUserData = {
+        name,
+        username,
+        img,
+        email,
+        provider,
+        password: hashedPassword
+    }
+
+    await userInstance.insert(newUserData)
+    return res.status(200).json({
+        authenticated: true,
+        user: newUserData,  
+        msj: "Usuario creado"
+    });
+}
+
+async function validateLogin(req, res, next){
+    const validatorErrors = validationResult(req);
+    if (!validatorErrors.isEmpty()) {
+        return res.status(400).json({
+            authenticated: false,
+            user: null,
+            msj: validatorErrors.array()[0].msg
+        });
+    }
+    
+    const userInstance = new User();
     const { email, password } = req.body;
     const user = await userInstance.findByEmail(email);
     if(!user) return res.status(401).json({authenticated: false, user: null, msj: "email not found", errType: 1})
@@ -134,5 +168,6 @@ module.exports = {
     discordAuthCallback, 
     githubAuthCallback, 
     logout, 
-    validateLogin 
+    validateLogin,
+    validateSignUp
 };
